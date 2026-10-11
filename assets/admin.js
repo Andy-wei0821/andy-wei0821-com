@@ -1,6 +1,7 @@
+```js
 /* ============================================================
    MM_PersonalSite · 后台管理脚本 (mobile-first)
-   - 不走 Supabase Auth,直接 anon key 调 REST API
+   - 不走 Supabase Auth,直接 anon key 通过同源 /api 代理调 REST
    - RLS 策略允许 anon 全权限 (见 supabase_schema.sql)
    - "保护"靠:admin URL 不公开 + 站没流量
    ============================================================ */
@@ -28,7 +29,7 @@
   }
 
   async function api(method, table, query = '', body = null) {
-    const r = await fetch(`${URL}/rest/v1/${table}${query ? '?' + query : ''}`, {
+    const r = await fetch(`/api/${table}${query ? '?' + query : ''}`, {
       method,
       headers: apiHeaders(),
       body: body ? JSON.stringify(body) : undefined,
@@ -41,7 +42,6 @@
     return r.json();
   }
 
-  // ---------- 列表 ----------
   async function loadPosts() {
     const box = $('#posts-list');
     box.innerHTML = '<div class="loading">加载中…</div>';
@@ -65,7 +65,6 @@
           </div>
         </div>
       `).join('');
-
       $$('#posts-list .admin-item').forEach((el) => {
         const id = el.dataset.id;
         const post = posts.find((p) => p.id === id);
@@ -100,7 +99,6 @@
           </div>
         </div>
       `).join('');
-
       $$('#today-list .admin-item').forEach((el) => {
         const id = el.dataset.id;
         const entry = entries.find((x) => x.id === id);
@@ -112,7 +110,6 @@
     }
   }
 
-  // ---------- 文章 CRUD ----------
   function slugify(s) {
     return String(s || '').toLowerCase()
       .replace(/[^a-z0-9\u4e00-\u9fa5\s-]/g, '')
@@ -177,30 +174,35 @@
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true; btn.textContent = '保存中…';
     try {
-      if (id) {
-        await api('PATCH', 'posts', `id=eq.${id}`, data);
-      } else {
-        await api('POST', 'posts', '', data);
-      }
+      if (id) await api('PATCH', 'posts', `id=eq.${id}`, data);
+      else await api('POST', 'posts', '', data);
       $('#post-modal').style.display = 'none';
       loadPosts();
     } catch (err) {
-      alert('保存失败:' + err.message);
+      await diagnoseAndAlert('保存失败', err, 'POST');
+      $('#post-modal').style.display = 'none';
+      loadPosts();
     } finally {
       btn.disabled = false; btn.textContent = '保存';
     }
   }
 
   async function deletePost(id) {
-    try {
-      await api('DELETE', 'posts', `id=eq.${id}`);
-      loadPosts();
-    } catch (err) {
-      alert('删除失败:' + err.message);
-    }
+    try { await api('DELETE', 'posts', `id=eq.${id}`); loadPosts(); }
+    catch (err) { await diagnoseAndAlert('删除失败', err, 'DELETE'); }
   }
 
-  // ---------- 今日 CRUD ----------
+  async function diagnoseAndAlert(title, origErr, verb) {
+    const lines = [`${title}: ${origErr.message}`];
+    try {
+      const probe = await fetch(`/api/posts?select=id&limit=1`, { method: 'GET', headers: apiHeaders(), cache: 'no-store' }).catch((e) => ({ _err: e.message }));
+      if (probe && probe._err) lines.push(`/api 代理: ❌ ${probe._err}`);
+      else if (probe && probe.status) lines.push(`/api 代理: ✅ HTTP ${probe.status}`);
+    } catch (e) { lines.push(`诊断失败: ${e.message}`); }
+    alert(lines.join('\n'));
+    console.error('[admin]', verb, origErr, lines);
+  }
+
   function openTodayModal(entry) {
     const modal = $('#today-modal');
     const form = $('#today-form');
@@ -231,37 +233,28 @@
       note: form.note.value.trim(),
       todo: form.todo.value.trim(),
     };
-    if (!data.date || !data.quote) {
-      alert('日期和金句必填');
-      return;
-    }
+    if (!data.date || !data.quote) { alert('日期和金句必填'); return; }
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true; btn.textContent = '保存中…';
     try {
-      if (id) {
-        await api('PATCH', 'today_entries', `id=eq.${id}`, data);
-      } else {
-        await api('POST', 'today_entries', '', data);
-      }
+      if (id) await api('PATCH', 'today_entries', `id=eq.${id}`, data);
+      else await api('POST', 'today_entries', '', data);
       $('#today-modal').style.display = 'none';
       loadTodayAdmin();
     } catch (err) {
-      alert('保存失败:' + err.message);
+      await diagnoseAndAlert('保存失败', err, 'POST');
+      $('#today-modal').style.display = 'none';
+      loadTodayAdmin();
     } finally {
       btn.disabled = false; btn.textContent = '保存';
     }
   }
 
   async function deleteToday(id) {
-    try {
-      await api('DELETE', 'today_entries', `id=eq.${id}`);
-      loadTodayAdmin();
-    } catch (err) {
-      alert('删除失败:' + err.message);
-    }
+    try { await api('DELETE', 'today_entries', `id=eq.${id}`); loadTodayAdmin(); }
+    catch (err) { await diagnoseAndAlert('删除失败', err, 'DELETE'); }
   }
 
-  // ---------- 确认弹窗 ----------
   let pendingAction = null;
   function confirmDelete(title, msg, action) {
     $('#confirm-title').textContent = title;
@@ -270,9 +263,7 @@
     $('#confirm-modal').style.display = 'flex';
   }
 
-  // ---------- 绑定 ----------
   function bind() {
-    // tab 切换
     $$('.admin-tabs .tab').forEach((t) => {
       t.onclick = () => {
         $$('.admin-tabs .tab').forEach((x) => x.classList.remove('active'));
@@ -282,42 +273,24 @@
         $('#today-tab').style.display = tab === 'today' ? 'block' : 'none';
       };
     });
-
-    // 新建按钮
     $('#new-post-btn').onclick = () => openPostModal(null);
     $('#new-today-btn').onclick = () => openTodayModal(null);
-
-    // 表单
     $('#post-form').addEventListener('submit', savePost);
     $('#today-form').addEventListener('submit', saveToday);
-
-    // Markdown 实时预览
     $('#post-content').addEventListener('input', updatePreview);
-
-    // 弹窗关闭
     $$('[data-close]').forEach((b) => {
-      b.onclick = () => {
-        b.closest('.modal').style.display = 'none';
-        pendingAction = null;
-      };
+      b.onclick = () => { b.closest('.modal').style.display = 'none'; pendingAction = null; };
     });
     $('#confirm-ok').onclick = () => {
       if (pendingAction) pendingAction();
       $('#confirm-modal').style.display = 'none';
       pendingAction = null;
     };
-
-    // 点遮罩关闭 modal
     $$('.modal').forEach((m) => {
       m.addEventListener('click', (e) => {
-        if (e.target === m) {
-          m.style.display = 'none';
-          pendingAction = null;
-        }
+        if (e.target === m) { m.style.display = 'none'; pendingAction = null; }
       });
     });
-
-    // Esc 关闭弹窗
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         $$('.modal').forEach((m) => { m.style.display = 'none'; });
@@ -326,7 +299,6 @@
     });
   }
 
-  // ---------- 启动 ----------
   function init() {
     bind();
     if (!isConfigured) {
@@ -345,3 +317,6 @@
     init();
   }
 })();
+```
+
+---
