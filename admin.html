@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>后台 - Andy Wei</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231a1a1a'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='-apple-system,sans-serif' font-size='15' font-weight='700' fill='%23fff'%3EAW%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <link rel="stylesheet" href="assets/admin.css" />
+</head>
+<body data-page="admin">
+
+<header class="topnav">
+  <a href="index.html" class="brand"><span class="brand-mark">AW</span><span class="brand-name">后台</span></a>
+  <a href="index.html" class="links">返回</a>
+</header>
+
+<main class="admin-main">
+  <div id="config-warn" class="admin-warn" style="display:none;">
+    <strong>Supabase 还没配置</strong> - 编辑 <code>assets/config.js</code> 填 URL 和 KEY。
+  </div>
+
+  <div class="admin-tabs">
+    <button class="tab active" data-tab="posts">文章 <span id="posts-count" class="muted">0</span></button>
+    <button class="tab" data-tab="today">今日 <span id="today-count" class="muted">0</span></button>
+  </div>
+
+  <div id="posts-tab" class="tab-panel">
+    <button class="btn-primary full" id="new-post-btn" style="margin-bottom:16px;">+ 新建文章</button>
+    <div id="posts-list"></div>
+  </div>
+
+  <div id="today-tab" class="tab-panel" style="display:none;">
+    <button class="btn-primary full" id="new-today-btn" style="margin-bottom:16px;">+ 新增今日</button>
+    <div id="today-list"></div>
+  </div>
+</main>
+
+<!-- 文章编辑弹窗 -->
+<div id="post-modal" class="modal" style="display:none;">
+  <div class="modal-inner">
+    <div class="modal-header">
+      <h2 id="post-modal-title">新建文章</h2>
+      <button class="modal-close" data-close>×</button>
+    </div>
+    <form id="post-form" class="admin-form">
+      <label class="grow">
+        <span>标题</span>
+        <input type="text" name="title" required maxlength="200" />
+      </label>
+      <div class="form-row">
+        <label>
+          <span>分类</span>
+          <select name="category" required>
+            <option value="投资">投资</option>
+            <option value="技术">技术</option>
+            <option value="产品">产品</option>
+            <option value="随感">随感</option>
+          </select>
+        </label>
+        <label>
+          <span>日期</span>
+          <input type="date" name="date" required />
+        </label>
+      </div>
+      <div class="form-row">
+        <label>
+          <span>阅读时长</span>
+          <input type="text" name="reading_time" value="5 分钟" maxlength="20" />
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" name="is_published" checked />
+          <span>发布</span>
+        </label>
+      </div>
+      <label>
+        <span>slug (留空自动生成)</span>
+        <input type="text" name="slug" placeholder="2026-09-15-my-topic" />
+      </label>
+      <label>
+        <span>摘要</span>
+        <textarea name="excerpt" rows="2" maxlength="500"></textarea>
+      </label>
+      <label>
+        <span>正文 (Markdown)</span>
+        <textarea name="content_md" id="post-content" rows="12" required></textarea>
+      </label>
+      <div class="editor-preview" id="post-preview">
+        <p class="muted">预览…</p>
+      </div>
+      <input type="hidden" name="id" />
+      <div class="form-actions">
+        <button type="button" class="btn-ghost" data-close>取消</button>
+        <button type="submit" class="btn-primary">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 今日编辑弹窗 -->
+<div id="today-modal" class="modal" style="display:none;">
+  <div class="modal-inner">
+    <div class="modal-header">
+      <h2 id="today-modal-title">新增今日</h2>
+      <button class="modal-close" data-close>×</button>
+    </div>
+    <form id="today-form" class="admin-form">
+      <label>
+        <span>日期</span>
+        <input type="date" name="date" required />
+      </label>
+      <label>
+        <span>金句 (必填)</span>
+        <input type="text" name="quote" required maxlength="200" />
+      </label>
+      <label>
+        <span>解释</span>
+        <textarea name="note" rows="3"></textarea>
+      </label>
+      <label>
+        <span>明日待办</span>
+        <textarea name="todo" rows="2"></textarea>
+      </label>
+      <input type="hidden" name="id" />
+      <div class="form-actions">
+        <button type="button" class="btn-ghost" data-close>取消</button>
+        <button type="submit" class="btn-primary">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 确认弹窗 -->
+<div id="confirm-modal" class="modal" style="display:none;">
+  <div class="modal-inner modal-small">
+    <div class="modal-header">
+      <h2 id="confirm-title">确认</h2>
+    </div>
+    <p id="confirm-msg" style="margin-bottom:24px;">确定操作?</p>
+    <div class="form-actions">
+      <button type="button" class="btn-ghost" data-close>取消</button>
+      <button type="button" class="btn-danger" id="confirm-ok">确定</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/config.js"></script>
+<script src="assets/md.js"></script>
+<script src="assets/admin.js"></script>
+</body>
+</html>

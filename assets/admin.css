@@ -1,0 +1,294 @@
+/* ============================================================
+   MM_PersonalSite · admin mobile-first 样式
+   复用 personal_homepage 的 CSS 变量
+   ============================================================ */
+
+.admin-main {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 24px 20px 80px;
+}
+
+.admin-warn {
+  background: #fff8e1;
+  border: 1px solid #f0c14b;
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #5a4400;
+}
+.admin-warn code {
+  background: #fff;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid #f0c14b;
+}
+
+/* tabs */
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--soft);
+  border-radius: var(--radius);
+  padding: 4px;
+  margin-bottom: 24px;
+  position: sticky;
+  top: 56px;
+  z-index: 10;
+}
+.admin-tabs .tab {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.admin-tabs .tab.active {
+  background: var(--fg);
+  color: var(--bg);
+}
+.admin-tabs .tab .muted {
+  font-weight: 400;
+  font-size: 12px;
+  opacity: 0.7;
+  margin-left: 4px;
+}
+
+/* lists */
+#posts-list, #today-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.admin-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  transition: border-color .15s;
+}
+.admin-item:active { border-color: var(--fg); }
+.item-date {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 60px;
+}
+.item-info { flex: 1; min-width: 0; }
+.item-title {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.item-meta {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.item-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.item-actions button {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 12px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.item-actions button.danger {
+  border-color: #e0e0e0;
+  color: #c62828;
+}
+.item-actions button:active { background: var(--soft); }
+
+/* forms */
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.admin-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.admin-form label.grow { flex: 1; }
+.admin-form label.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--fg);
+  font-weight: 400;
+}
+.admin-form input[type="text"],
+.admin-form input[type="email"],
+.admin-form input[type="date"],
+.admin-form select,
+.admin-form textarea {
+  width: 100%;
+  padding: 11px 12px;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 15px;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color .15s;
+  box-sizing: border-box;
+}
+.admin-form input:focus,
+.admin-form select:focus,
+.admin-form textarea:focus {
+  outline: none;
+  border-color: var(--fg);
+}
+.admin-form textarea {
+  resize: vertical;
+  min-height: 60px;
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.admin-form textarea#post-content {
+  min-height: 180px;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+.form-row label { flex: 1; min-width: 0; }
+
+.editor-preview {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  background: var(--soft);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 60px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.editor-preview p { margin: 0 0 8px; }
+.editor-preview p:last-child { margin-bottom: 0; }
+.editor-preview .muted { color: var(--muted); font-style: italic; }
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.btn-primary, .btn-ghost, .btn-danger {
+  padding: 11px 20px;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  border: 1px solid var(--fg);
+}
+.btn-primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--fg); border-color: var(--line); }
+.btn-danger { background: #c62828; color: #fff; border-color: #c62828; }
+.btn-primary.full { width: 100%; padding: 14px; }
+
+/* modal - full screen on mobile */
+.modal {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn .15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-inner {
+  background: var(--bg);
+  width: 100%;
+  max-width: 600px;
+  max-height: 92vh;
+  border-radius: 12px 12px 0 0;
+  padding: 16px 20px 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.modal-small { max-width: 360px; border-radius: 12px; margin: auto 0; }
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.modal-header h2 { font-size: 18px; margin: 0; }
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.error-msg {
+  color: #c62828;
+  background: #fde8e8;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  margin: 0;
+}
+
+.loading {
+  padding: 30px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Desktop */
+@media (min-width: 720px) {
+  .modal { align-items: center; }
+  .modal-inner {
+    border-radius: 12px;
+    margin: auto;
+    max-height: 88vh;
+  }
+  .editor-preview { max-height: 300px; }
+}
