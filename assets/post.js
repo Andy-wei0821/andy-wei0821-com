@@ -1,65 +1,42 @@
-// MM 个人主页 — 文章详情页
-// ?slug=xxx → Supabase posts 表查一条 → md 渲染
+```js
+/* ============================================================
+   MM_PersonalSite · 单篇文章页面
+   ============================================================ */
 
 (function () {
-  'use strict';
+  function $(s) { return document.querySelector(s); }
+  function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
-  var $ = function (id) { return document.getElementById(id); };
   var cfg = window.MM_CONFIG || {};
   var SB = { url: cfg.supabaseUrl, key: cfg.supabaseKey };
 
-  var y = $('year'); if (y) y.textContent = new Date().getFullYear();
+  var slug = new URLSearchParams(location.search).get('slug') || '';
+  if (!slug) { $('#post-content').innerHTML = '<p class="muted">没指定 slug。</p>'; return; }
+  document.title = '加载中… · Andy Wei';
 
-  function qs() {
-    var m = location.search.match(/[?&]slug=([^&]+)/);
-    return m ? decodeURIComponent(m[1]) : null;
-  }
-
-  var slug = qs();
-  if (!slug) {
-    $('post-title').textContent = '未指定文章';
-    $('post-content').innerHTML = '<p class="muted">缺少 slug 参数。</p>';
-    return;
-  }
-
-  if (!SB.url || !SB.key) {
-    $('post-content').innerHTML = '<p class="muted">Supabase 未配置。</p>';
-    return;
-  }
-
-  var url = SB.url + '/rest/v1/posts?slug=eq.' + encodeURIComponent(slug)
+  var url = '/api/posts?slug=eq.' + encodeURIComponent(slug)
           + '&is_published=eq.true&select=*';
 
-  fetch(url, { headers: {
-    'apikey': SB.key,
-    'Authorization': 'Bearer ' + SB.key
-  }})
-    .then(function (r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    })
+  fetch(url, { headers: { 'apikey': SB.key, 'Authorization': 'Bearer ' + SB.key } })
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
     .then(function (rows) {
-      if (!rows.length) {
-        $('post-title').textContent = '找不到这篇文章';
-        $('post-content').innerHTML = '<p class="muted">slug: ' + escapeHtml(slug) + ' 不存在或未发布。</p>';
-        return;
-      }
-      var p = rows[0];
-      document.title = p.title + ' — Andy Wei';
-      $('post-title').textContent = p.title;
-      var meta = [p.date, p.category].filter(Boolean).join(' · ');
-      if (p.reading_time) meta += ' · ' + p.reading_time + ' min';
-      $('post-meta').textContent = meta;
-      $('post-content').innerHTML = window.MD.render(p.content_md || '');
+      if (!rows.length) { $('#post-content').innerHTML = '<p class="muted">文章没找到。</p>'; return; }
+      var post = rows[0];
+      document.title = post.title + ' · Andy Wei';
+
+      var meta = $('#post-meta');
+      meta.innerHTML = '<span class="post-date">' + escapeHtml(post.date) + '</span> · '
+                     + '<span class="post-cat">' + escapeHtml(post.category) + '</span> · '
+                     + '<span class="post-time">' + escapeHtml(post.reading_time || '5 分钟') + '</span>';
+
+      $('#post-title').textContent = post.title;
+      $('#post-body').innerHTML = window.MD.render(post.content_md || '');
+      var bc = $('#breadcrumb-slug'); if (bc) bc.textContent = post.slug;
     })
     .catch(function (e) {
-      $('post-title').textContent = '加载失败';
-      $('post-content').innerHTML = '<p class="muted">' + escapeHtml(e.message || String(e)) + '</p>';
+      $('#post-content').innerHTML = '<p class="muted">加载失败: ' + escapeHtml(e.message) + '</p>';
     });
-
-  function escapeHtml(s) {
-    return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-  }
 })();
+```
+
+---
